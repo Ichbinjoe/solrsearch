@@ -1,0 +1,37 @@
+<div class="container">
+    <div class="row mt-5 mb-5">
+        <div class="col-12">
+            <form action="./" method="get">
+                <div class="input-group">
+                  <input name="q" type="text" class="form-control" placeholder="Search"{{#if q}}value="{{q}}"{{/if}}>
+                    <div class="input-group-append">
+                        <button class="btn btn-primary">Search</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    {{#each results}}
+    <div class="row">
+        <div class="col-12">
+            <a href="{{this.url}}"><h3>{{this.title}}</h3></a>
+            <p>{{this.url}}</p>
+        </div>
+    </div>
+    {{/each}}
+    {{#if pagination}}
+    <div class="row">
+        <div class="col-12">
+            <nav>
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {{#if no_prev}}disabled{{/if}}"><a class="page-link" href="{{#if prev_link}}{{prev_link}}{{else}}#{{/if}}">Previous</a></li>
+                    {{#each page}}
+                    <li class="page-item {{#if this.disabled}}disabled{{/if}}"><a class="page-link" href="{{#if this.link}}{{this.link}}{{else}}#{{/if}}">{{this.text}}</a></li>
+                    {{/each}}
+                    <li class="page-item {{#if no_next}}disabled{{/if}}"><a class="page-link" href="{{#if next_link}}{{next_link}}{{else}}#{{/if}}">Next</a></li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {{/if}}
+</div>
