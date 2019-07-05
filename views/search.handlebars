@@ -1,7 +1,7 @@
 <div class="container">
     <div class="row mt-5 mb-5">
         <div class="col-12">
-            <form action="./" method="get">
+            <form action="{{base}}" method="get">
                 <div class="input-group">
                   <input name="q" type="text" class="form-control" placeholder="Search"{{#if q}}value="{{q}}"{{/if}}>
                     <div class="input-group-append">
@@ -19,6 +19,14 @@
         </div>
     </div>
     {{/each}}
+    {{#if no_results}}
+    <div class="row">
+        <div class="col-12 justify-content-center">
+            <h2>No Results</h2>
+        </div>
+	</div>
+    <div>
+    {{/if}}
     {{#if pagination}}
     <div class="row">
         <div class="col-12">

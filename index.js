@@ -2,7 +2,14 @@ const express = require('express');
 const http = require('http');
 const path = require('path');
 
-const config = require('./config.json');
+function get_config() {
+    const fs = require('fs');
+    if (!fs.existsSync('config.json'))
+        fs.copyFileSync('config.json.example', 'config.json')
+    return require('config.json')
+}
+
+const config = get_config();
 
 const app = express();
 
@@ -16,7 +23,7 @@ const start_regex = /\{\{start\}\}/
 const result_replacer = new RegExp(config.replace.regex)
 
 function render_result(q, res, data) {
-    const tmpl = {q}
+    const tmpl = {q, base: config.base}
     
     const {numFound, start, docs} = data.response
     const page_size = config.page_size;
@@ -31,6 +38,9 @@ function render_result(q, res, data) {
         })
     }
 
+    if (numFound <= 0)
+	tmpl.no_results = true
+
     // Lets first figure out if we need pagination
     if (numFound > page_size) {
         tmpl.pagination = true
@@ -41,12 +51,12 @@ function render_result(q, res, data) {
         if (page_on <= 1)
             tmpl.no_prev = true
         else
-            tmpl.prev_link = `./?q=${q}&p=${page_on-1}`
+            tmpl.prev_link = `${config.base}/?q=${q}&p=${page_on-1}`
 
         if (page_on >= total_pages)
             tmpl.no_next = true
         else
-            tmpl.next_link = `./?q=${q}&p=${page_on+1}`
+            tmpl.next_link = `${config.base}/?q=${q}&p=${page_on+1}`
 
         tmpl.page = []
         if (total_pages < config.pagination_steps) {
@@ -54,7 +64,7 @@ function render_result(q, res, data) {
             for (let i = 1; i <= total_pages; i++) {
                 tmpl.page.push({
                     disabled: i == page_on,
-                    link: (i != page_on && `./?q=${q}&p=${i}`) || '#',
+                    link: (i != page_on && `${config.base}/?q=${q}&p=${i}`) || '#',
                     text: i.toLocaleString()
                 })
             }
@@ -67,7 +77,7 @@ function render_result(q, res, data) {
                 for (let i = 1; i <= config.pagination_steps - 2; i++) {
                     tmpl.page.push({
                         disabled: i == page_on,
-                        link: (i != page_on && `./?q=${q}&p=${i}`) || '#',
+                        link: (i != page_on && `${config.base}/?q=${q}&p=${i}`) || '#',
                         text: i.toLocaleString()
                     })
                 }
@@ -78,13 +88,13 @@ function render_result(q, res, data) {
                 })
                 tmpl.page.push({
                     disabled: false,
-                    link: `./?q=${q}&p=${total_pages}`,
+                    link: `${config.base}/?q=${q}&p=${total_pages}`,
                     text: total_pages.toLocaleString()
                 })
             } else if (page_on > total_pages - config.pagination_steps + (config.pagination_bubble + 1)) {
                 tmpl.page.push({
                     disabled: false,
-                    link: `./?q=${q}&p=1`,
+                    link: `${config.base}/?q=${q}&p=1`,
                     text: 1
                 })
                 
@@ -98,7 +108,7 @@ function render_result(q, res, data) {
                     i <= total_pages; i++) {
                     tmpl.page.push({
                         disabled: i == page_on,
-                        link: (i != page_on && `./?q=${q}&p=${i}`) || '#',
+                        link: (i != page_on && `${config.base}/?q=${q}&p=${i}`) || '#',
                         text: i.toLocaleString()
                     })
                 }
@@ -106,7 +116,7 @@ function render_result(q, res, data) {
                 // Yay we need both!
                 tmpl.page.push({
                     disabled: false,
-                    link: `./?q=${q}&p=1`,
+                    link: `${config.base}/?q=${q}&p=1`,
                     text: 1
                 })
                 
@@ -121,7 +131,7 @@ function render_result(q, res, data) {
                     i <= page_on + Math.floor(siding); i++) {
                     tmpl.page.push({
                         disabled: i == page_on,
-                        link: (i != page_on && `./?q=${q}&p=${i}`) || '#',
+                        link: (i != page_on && `${config.base}/?q=${q}&p=${i}`) || '#',
                         text: i.toLocaleString()
                     })
                 }
@@ -133,7 +143,7 @@ function render_result(q, res, data) {
                 })
                 tmpl.page.push({
                     disabled: false,
-                    link: `./?q=${q}&p=${total_pages}`,
+                    link: `${config.base}/?q=${q}&p=${total_pages}`,
                     text: total_pages.toLocaleString()
                 })
             }
@@ -143,7 +153,7 @@ function render_result(q, res, data) {
     res.render('search', tmpl)
 }
 
-app.get('/', (req, res) => {
+app.get(config.base, (req, res) => {
     if (req.query.q) {
         // OH BOY WE HAVE SOME SEARCHING TO DO
         const page_size = config.page_size
@@ -185,13 +195,12 @@ app.get('/', (req, res) => {
             })
         })
     } else {
-        res.render('search', {pagination: false, results: []})
+        res.render('search', {base: config.base, pagination: false, results: []})
     }
 })
 
 const bootstrap_path = path.join(__dirname, 'node_modules/bootstrap/dist')
-console.log(bootstrap_path)
 
-app.use(express.static(bootstrap_path))
+app.use(config.base, express.static(bootstrap_path))
 
-app.listen(3000);
+app.listen(3000, 'localhost');

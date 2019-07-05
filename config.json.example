@@ -1,0 +1,11 @@
+{
+  "query": "http://solr-instance-host:port/solr/core/select?defType=dismax&q={{query}}&qf=title%5E3%20id%5E2%20_text_&wt=json&rows={{rows}}&start={{start}}",
+  "page_size": 8,
+  "replace": {
+    "regex": "\/var\/www\/html\/",
+    "with": "http://your-resource-domain.tld/"
+  },
+  "pagination_steps": 11,
+  "pagination_bubble": 2,
+  "base": "/search"
+}
